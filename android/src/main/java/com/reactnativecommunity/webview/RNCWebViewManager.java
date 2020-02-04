@@ -396,7 +396,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   public void setMessagingEnabled(WebView view, boolean enabled) {
     ((RNCWebView) view).setMessagingEnabled(enabled);
   }
-   
+
   @ReactProp(name = "incognito")
   public void setIncognito(WebView view, boolean enabled) {
     // Remove all previous cookies
@@ -535,6 +535,14 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     view.setWebViewClient(new RNCWebViewClient());
   }
 
+   @ReactProp(name = "useNativeResumeAndPauseLifecycleEvents")
+  public void setUseNativeResumeAndPauseLifecycleEvents(WebView view, boolean useHostResumeAndPause) {
+    // This prop will ensure no background activity will occur while playing any media in a webview
+    // In cases where this prop is not set and a media streaming is consumed inside the WebView,
+    // You might experience  "Device and Network abuse" policy problems in Play Store.
+    ((RNCWebView) view).setUseHostResumeAndPause(useHostResumeAndPause);
+  }
+
   @Override
   public Map getExportedCustomDirectEventTypeConstants() {
     Map export = super.getExportedCustomDirectEventTypeConstants();
@@ -646,7 +654,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         public Bitmap getDefaultVideoPoster() {
           return Bitmap.createBitmap(50, 50, Bitmap.Config.ARGB_8888);
         }
-        
+
         @Override
         public void onShowCustomView(View view, CustomViewCallback callback) {
           if (mVideoView != null) {
@@ -977,6 +985,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     protected boolean sendContentSizeChangeEvents = false;
     private OnScrollDispatchHelper mOnScrollDispatchHelper;
     protected boolean hasScrollEvent = false;
+    protected boolean useHostResumeAndPause = false;
 
     /**
      * WebView must be created with an context of the current activity
@@ -995,15 +1004,24 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     public void setHasScrollEvent(boolean hasScrollEvent) {
       this.hasScrollEvent = hasScrollEvent;
     }
+    public void setUseHostResumeAndPause(boolean useHostResumeAndPause) {
+      this.useHostResumeAndPause = useHostResumeAndPause;
+    }
 
     @Override
     public void onHostResume() {
       // do nothing
+      if (useHostResumeAndPause) {
+        super.onResume();
+      }
     }
 
     @Override
     public void onHostPause() {
       // do nothing
+       if (useHostResumeAndPause) {
+        super.onPause();
+      }
     }
 
     @Override
